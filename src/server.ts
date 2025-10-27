@@ -1,11 +1,16 @@
 import { Server } from "http";
 import app from "./app";
 import config from "./config";
+import { prisma } from "./app/shared/prisma";
+import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 
 async function bootstrap() {
   // This variable will hold our server instance
   let server: Server;
   try {
+    // Database connection
+    await prisma.$connect();
+    console.log("Database connected successfully!!!");
     // Start the server
     server = app.listen(config.port, () => {
       console.log(`Server is running on http://localhost:${config.port}`);
@@ -42,4 +47,7 @@ async function bootstrap() {
   }
 }
 
-bootstrap();
+(async () => {
+  await bootstrap();
+  await seedSuperAdmin();
+})();
