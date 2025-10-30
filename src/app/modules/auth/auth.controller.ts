@@ -7,7 +7,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.login(req.body);
   const { accessToken, refreshToken, needPasswordChange } = result;
 
-  console.log({ accessToken, refreshToken });
+  // console.log({ accessToken, refreshToken });
   res.cookie("accessToken", accessToken, {
     secure: true,
     httpOnly: true,

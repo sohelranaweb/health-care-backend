@@ -62,24 +62,40 @@ const experienceDetailsSchema = z.object({
 
 // Doctor validation
 const createDoctorValidationSchema = z.object({
-  password: z.string({
-    error: "Password is required",
-  }),
+  password: z
+    .string({ message: "Password must be a string" })
+    .nonempty("Password is required")
+    .min(8, { message: "Password must be at least 8 characters long" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least 1 uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least 1 lowercase letter",
+    })
+    .regex(/\d/, { message: "Password must contain at least 1 number" })
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Password must contain at least 1 special character",
+    }),
   doctor: z.object({
     name: z.string({ error: "Name is required" }),
     email: z.string({ error: "Email is required" }),
-    contactNumber: z.string({ error: "Contact number is required" }),
-    address: z.string({ error: "Address is required" }),
-    registrationNumber: z.string({
-      error: "Registration number is required",
-    }),
+    contactNumber: z.string({ error: "Contact number is required" }).optional(),
+    address: z.string({ error: "Address is required" }).optional(),
+    registrationNumber: z
+      .string({
+        error: "Registration number is required",
+      })
+      .optional(),
     experience: z
       .number()
       .int()
       .min(0, "Experience must be at least 0")
       .optional(),
-    gender: z.enum([Gender.MALE, Gender.FEMALE]),
-    appointmentFee: z.number().int({ error: "Appointment fee is required" }),
+    gender: z.enum([Gender.MALE, Gender.FEMALE]).optional(),
+    appointmentFee: z
+      .number()
+      .int({ error: "Appointment fee is required" })
+      .optional(),
     followUpFee: z.number().int().optional(),
     qualification: z.string().optional(),
     currentWorkingPlace: z.string().optional(),
