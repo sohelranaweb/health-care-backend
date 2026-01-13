@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 import express, { NextFunction, Request, Response } from "express";
 import checkAuth from "../../middlewares/checkAuth";
-import { fileUploader } from "../../helpers/fileUploader";
+import { fileUploader } from "../../../helpers/fileUploader";
 import { SymptomsValidtaion } from "./symptom.validation";
 import { SymptomsController } from "./symptom.controller";
 

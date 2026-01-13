@@ -1,8 +1,9 @@
 import { Server } from "http";
 import app from "./app";
 import config from "./config";
-import { prisma } from "./app/shared/prisma";
-import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
+
+import { prisma } from "./shared/prisma";
+import seedSuperAdmin from "./helpers/seed";
 
 async function bootstrap() {
   // This variable will hold our server instance
@@ -11,6 +12,9 @@ async function bootstrap() {
     // Database connection
     await prisma.$connect();
     console.log("Database connected successfully!!!");
+    //Seed Super Admin
+    await seedSuperAdmin();
+
     // Start the server
     server = app.listen(config.port, () => {
       console.log(`Server is running on http://localhost:${config.port}`);
@@ -27,6 +31,10 @@ async function bootstrap() {
         process.exit(1);
       }
     };
+
+    // Call exitHandler on different signals
+    process.on("SIGTERM", exitHandler); // Docker/Kubernetes stop
+    process.on("SIGINT", exitHandler); // Ctrl+C
 
     // Handle unhandled promise rejections
     process.on("unhandledRejection", (error) => {
@@ -47,7 +55,4 @@ async function bootstrap() {
   }
 }
 
-(async () => {
-  await bootstrap();
-  await seedSuperAdmin();
-})();
+bootstrap();

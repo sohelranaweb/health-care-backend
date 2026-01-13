@@ -4,7 +4,7 @@ import { SpecialtiesController } from "./specialties.controller";
 import checkAuth from "../../middlewares/checkAuth";
 import validateRequest from "../../middlewares/validateRequest";
 import { SpecialtiesValidtaion } from "./specialties.validation";
-import { fileUploader } from "../../helpers/fileUploader";
+import { fileUploader } from "../../../helpers/fileUploader";
 
 const router = express.Router();
 

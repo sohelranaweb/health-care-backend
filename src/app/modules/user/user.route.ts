@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import { UserController } from "./user.controller";
-import { fileUploader } from "../../helpers/fileUploader";
+import { fileUploader } from "../../../helpers/fileUploader";
 import { UserValidation } from "./user.validation";
 import validateRequest from "../../middlewares/validateRequest";
 import checkAuth from "../../middlewares/checkAuth";
@@ -58,5 +58,11 @@ router.post(
     return UserController.createDoctor(req, res, next);
   }
 );
+
+// router.patch(
+//   "/:id/status",
+//   checkAuth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+//   UserController.changeProfileStatus
+// );
 
 export const userRoutes = router;

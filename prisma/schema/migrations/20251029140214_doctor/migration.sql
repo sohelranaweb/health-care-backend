@@ -1,8 +1,0 @@
--- AlterTable
-ALTER TABLE "doctors" ALTER COLUMN "contactNumber" DROP NOT NULL,
-ALTER COLUMN "address" DROP NOT NULL,
-ALTER COLUMN "registrationNumber" DROP NOT NULL,
-ALTER COLUMN "gender" DROP NOT NULL,
-ALTER COLUMN "appointmentFee" DROP NOT NULL,
-ALTER COLUMN "followUpFee" DROP NOT NULL,
-ALTER COLUMN "avgConsultationTime" SET DEFAULT 20;

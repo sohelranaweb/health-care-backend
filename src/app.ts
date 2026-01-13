@@ -5,9 +5,15 @@ import router from "./app/routes";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import notFound from "./app/middlewares/notFound";
 import cookieParser from "cookie-parser";
+import { PaymentController } from "./app/modules/payment/payment.controller";
 
 const app: Application = express();
 
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  PaymentController.handleStripeWebhookEvent
+);
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -18,12 +24,12 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/v2", router);
+app.use("/api/v1", router);
 
 app.get("/", (req: Request, res: Response) => {
   res.send({
     message: "health care backend runing...",
-    environment: config.node_env,
+    environment: config.env,
     uptime: process.uptime().toFixed(2) + "sec",
     timeStamp: new Date().toISOString(),
   });

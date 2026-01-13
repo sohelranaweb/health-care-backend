@@ -1,7 +1,7 @@
 import { Request } from "express";
-import { fileUploader } from "../../helpers/fileUploader";
-import { prisma } from "../../shared/prisma";
-import { paginationHelper } from "../../helpers/paginationHelpers";
+import { fileUploader } from "../../../helpers/fileUploader";
+import { prisma } from "../../../shared/prisma";
+import { paginationHelper } from "../../../helpers/paginationHelpers";
 import { Symptoms } from "@prisma/client";
 
 const createSymptoms = async (req: Request) => {

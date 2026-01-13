@@ -1,0 +1,47 @@
+import { UserRole } from "@prisma/client";
+import express from "express";
+import { ScheduleController } from "./schedule.controller";
+import checkAuth from "../../middlewares/checkAuth";
+
+const router = express.Router();
+
+router.get(
+  "/",
+  checkAuth(UserRole.DOCTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  ScheduleController.getAllFromDB
+);
+
+/**
+ * API ENDPOINT: /schedule/:id
+ *
+ * Get schedule data by id
+ */
+router.get(
+  "/:id",
+  checkAuth(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.DOCTOR,
+    UserRole.PATIENT
+  ),
+  ScheduleController.getByIdFromDB
+);
+
+router.post(
+  "/",
+  checkAuth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  ScheduleController.insertIntoDB
+);
+
+/**
+ * API ENDPOINT: /schdeule/:id
+ *
+ * Delete schedule data by id
+ */
+router.delete(
+  "/:id",
+  checkAuth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  ScheduleController.deleteFromDB
+);
+
+export const ScheduleRoutes = router;

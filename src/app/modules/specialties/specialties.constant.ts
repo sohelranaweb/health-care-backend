@@ -1,2 +1,6 @@
-export const specialtiesSearchableFields = ["title"];
-export const specialtiesFilterableFields = ["title", "searchTerm"];
+export const specialtiesSearchableFields = ["title", "description"];
+export const specialtiesFilterableFields = [
+  "title",
+  "description",
+  "searchTerm",
+];

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import catchAsync from "../../shared/catchAsync";
-import sendResponse from "../../shared/sendResponse";
+import catchAsync from "../../../shared/catchAsync";
+import sendResponse from "../../../shared/sendResponse";
 import { SymptomsService } from "./symptom.service";
-import pick from "../../helpers/pick";
+import pick from "../../../helpers/pick";
 import httpStatus from "http-status";
 
 const createSymptoms = catchAsync(async (req: Request, res: Response) => {

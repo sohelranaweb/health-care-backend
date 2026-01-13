@@ -1,37 +1,42 @@
 import { Request } from "express";
-import { fileUploader } from "../../helpers/fileUploader";
+import { fileUploader } from "../../../helpers/fileUploader";
 import bcrypt from "bcryptjs";
-import { prisma } from "../../shared/prisma";
+import { prisma } from "../../../shared/prisma";
 import { Admin, Doctor, Prisma, UserRole, UserStatus } from "@prisma/client";
-import { paginationHelper } from "../../helpers/paginationHelpers";
+import { paginationHelper } from "../../../helpers/paginationHelpers";
 import { userSearchableFields } from "./user.constant";
-import { IJwtPayload } from "../../types/common";
+
+import config from "../../../config";
+import { IAuthUser } from "../../interfaces/common";
 
 const createPatient = async (req: Request) => {
-  try {
-    if (req.file) {
-      const uploadedResult = await fileUploader.uploadToCloudinary(req.file);
-      req.body.patient.profilePhoto = uploadedResult?.secure_url;
-      //     console.log({ uploadResult });
-    }
-
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    const result = await prisma.$transaction(async (tx) => {
-      await tx.user.create({
-        data: {
-          email: req.body.patient.email,
-          password: hashedPassword,
-        },
-      });
-      return await tx.patient.create({
-        data: req.body.patient,
-      });
-    });
-    return result;
-  } catch (err) {
-    console.error(err);
-    throw err;
+  const file = req.file;
+  if (file) {
+    const uploadedResult = await fileUploader.uploadToCloudinary(file);
+    req.body.patient.profilePhoto = uploadedResult?.secure_url;
   }
+  const hashedPassword = await bcrypt.hash(
+    req.body.password,
+    Number(config.salt_round)
+  );
+  const userData = {
+    email: req.body.patient.email,
+    password: hashedPassword,
+    role: UserRole.PATIENT,
+  };
+  const result = await prisma.$transaction(async (tnx) => {
+    await tnx.user.create({
+      data: {
+        ...userData,
+        needPasswordChange: false,
+      },
+    });
+    const createdPatientData = await tnx.patient.create({
+      data: req.body.patient,
+    });
+    return createdPatientData;
+  });
+  return result;
 };
 
 const createAdmin = async (req: Request): Promise<Admin> => {
@@ -41,7 +46,10 @@ const createAdmin = async (req: Request): Promise<Admin> => {
     req.body.admin.profilePhoto = uploadToCloudinary?.secure_url;
   }
 
-  const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  const hashedPassword = await bcrypt.hash(
+    req.body.password,
+    Number(config.salt_round)
+  );
 
   const userData = {
     email: req.body.admin.email,
@@ -64,12 +72,15 @@ const createAdmin = async (req: Request): Promise<Admin> => {
 
 // const createDoctor = async (req: Request): Promise<Doctor> => {
 //   const file = req.file;
+
+//   // Upload profile photo if file exists
 //   if (file) {
-//     const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-//     req.body.doctor.profilePhoto = uploadToCloudinary?.secure_url;
+//     const uploadResult = await fileUploader.uploadToCloudinary(file);
+//     req.body.doctor.profilePhoto = uploadResult?.secure_url;
 //   }
 
-//   const hashedPassword = await bcrypt.hash(req.body.password, 10);
+//   // Hash password
+//   const hashedPassword = await bcrypt.hash(req.body.password, Number(config.salt));
 
 //   const userData = {
 //     email: req.body.doctor.email,
@@ -77,14 +88,23 @@ const createAdmin = async (req: Request): Promise<Admin> => {
 //     role: UserRole.DOCTOR,
 //   };
 
-//   const result = await prisma.$transaction(async (transactionClient) => {
-//     await transactionClient.user.create({
-//       data: userData,
+//   // Prepare doctor data with nested experienceDetails
+//   const doctorData = {
+//     ...req.body.doctor,
+//     experienceDetails: req.body.doctor.experienceDetails
+//       ? { create: req.body.doctor.experienceDetails }
+//       : undefined,
+//   };
+
+//   // Transaction: create User first, then Doctor
+//   const result = await prisma.$transaction(async (tx) => {
+//     await tx.user.create({ data: userData });
+
+//     const createdDoctor = await tx.doctor.create({
+//       data: doctorData,
 //     });
-//     const createdDoctorData = await transactionClient.doctor.create({
-//       data: req.body.doctor,
-//     });
-//     return createdDoctorData;
+
+//     return createdDoctor;
 //   });
 
 //   return result;
@@ -100,7 +120,10 @@ const createDoctor = async (req: Request): Promise<Doctor> => {
   }
 
   // Hash password
-  const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  const hashedPassword = await bcrypt.hash(
+    req.body.password,
+    Number(config.salt_round)
+  );
 
   const userData = {
     email: req.body.doctor.email,
@@ -108,31 +131,114 @@ const createDoctor = async (req: Request): Promise<Doctor> => {
     role: UserRole.DOCTOR,
   };
 
-  // Prepare doctor data with nested experienceDetails
-  const doctorData = {
-    ...req.body.doctor,
-    experienceDetails: req.body.doctor.experienceDetails
-      ? { create: req.body.doctor.experienceDetails }
-      : undefined,
-  };
+  // Extract specialties and symptoms from doctor data
+  const { specialties, symptoms, ...doctorData } = req.body.doctor;
+  const result = await prisma.$transaction(async (transactionClient) => {
+    // Step 1: Create user
+    await transactionClient.user.create({
+      data: userData,
+    });
 
-  // Transaction: create User first, then Doctor
-  const result = await prisma.$transaction(async (tx) => {
-    await tx.user.create({ data: userData });
-
-    const createdDoctor = await tx.doctor.create({
+    // Step 2: Create doctor
+    const createdDoctorData = await transactionClient.doctor.create({
       data: doctorData,
     });
 
-    return createdDoctor;
-  });
+    // Step 3: Create doctor specialties if provided
+    if (specialties && Array.isArray(specialties) && specialties.length > 0) {
+      // Verify all specialties exist
+      const existingSpecialties = await transactionClient.specialties.findMany({
+        where: {
+          id: {
+            in: specialties,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
 
+      const existingSpecialtyIds = existingSpecialties.map((s) => s.id);
+      const invalidSpecialties = specialties.filter(
+        (id) => !existingSpecialtyIds.includes(id)
+      );
+
+      if (invalidSpecialties.length > 0) {
+        throw new Error(
+          `Invalid specialty IDs: ${invalidSpecialties.join(", ")}`
+        );
+      }
+
+      // Create doctor specialties relations
+      const doctorSpecialtiesData = specialties.map((specialtyId) => ({
+        doctorId: createdDoctorData.id,
+        specialitiesId: specialtyId,
+      }));
+
+      await transactionClient.doctorSpecialties.createMany({
+        data: doctorSpecialtiesData,
+      });
+    }
+
+    if (symptoms && Array.isArray(symptoms) && symptoms.length > 0) {
+      // Verify all symptoms exist
+      const existingSymptoms = await transactionClient.symptoms.findMany({
+        where: {
+          id: {
+            in: symptoms,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const existingSymptomIds = existingSymptoms.map((s) => s.id);
+      const invalidSymptoms = symptoms.filter(
+        (id) => !existingSymptomIds.includes(id)
+      );
+
+      if (invalidSymptoms.length > 0) {
+        throw new Error(`Invalid specialty IDs: ${invalidSymptoms.join(", ")}`);
+      }
+
+      // Create doctor symptoms relations
+      const doctorSymptomsData = symptoms.map((symptomId) => ({
+        doctorId: createdDoctorData.id,
+        symptomsId: symptomId,
+      }));
+
+      await transactionClient.doctorSymptoms.createMany({
+        data: doctorSymptomsData,
+      });
+    }
+
+    // Step 4: Return doctor with specialties and symptoms
+    const doctorWithSpecialties = await transactionClient.doctor.findUnique({
+      where: {
+        id: createdDoctorData.id,
+      },
+      include: {
+        doctorSpecialties: {
+          include: {
+            specialities: true,
+          },
+        },
+        doctorSymptoms: {
+          include: {
+            symptoms: true,
+          },
+        },
+      },
+    });
+
+    return doctorWithSpecialties!;
+  });
   return result;
 };
 
 const getAllFromDB = async (params: any, options: any) => {
-  const { page, limit, skip, sortBy, sortOrder } =
-    paginationHelper.calculatePagination(options);
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
 
   const andConditions: Prisma.UserWhereInput[] = [];
@@ -165,13 +271,28 @@ const getAllFromDB = async (params: any, options: any) => {
       : {};
 
   const result = await prisma.user.findMany({
+    where: whereConditions,
     skip,
     take: limit,
-    where: {
-      AND: whereConditions,
-    },
-    orderBy: {
-      [sortBy]: sortOrder,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? {
+            [options.sortBy]: options.sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      needPasswordChange: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      admin: true,
+      patient: true,
+      doctor: true,
     },
   });
 
@@ -188,10 +309,10 @@ const getAllFromDB = async (params: any, options: any) => {
     data: result,
   };
 };
-const getMyProfile = async (user: IJwtPayload) => {
+const getMyProfile = async (user: IAuthUser) => {
   const userInfo = await prisma.user.findUniqueOrThrow({
     where: {
-      email: user.email,
+      email: user?.email,
       status: UserStatus.ACTIVE,
     },
     select: {
@@ -215,9 +336,6 @@ const getMyProfile = async (user: IJwtPayload) => {
     profileData = await prisma.doctor.findUnique({
       where: {
         email: userInfo.email,
-      },
-      include: {
-        experienceDetails: true,
       },
     });
   } else if (userInfo.role === UserRole.ADMIN) {

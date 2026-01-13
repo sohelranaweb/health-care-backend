@@ -1,8 +1,8 @@
 import { Request } from "express";
-import { fileUploader } from "../../helpers/fileUploader";
-import { prisma } from "../../shared/prisma";
+import { fileUploader } from "../../../helpers/fileUploader";
+import { prisma } from "../../../shared/prisma";
 import { Prisma, Specialties } from "@prisma/client";
-import { paginationHelper } from "../../helpers/paginationHelpers";
+import { paginationHelper } from "../../../helpers/paginationHelpers";
 import { specialtiesSearchableFields } from "./specialties.constant";
 
 const createSpecialties = async (req: Request) => {
@@ -23,7 +23,7 @@ const createSpecialties = async (req: Request) => {
 const getAllFromDB = async (filters: any, options: any) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = filters;
-  console.log("params", filters);
+  // console.log("params", filters);
 
   const andConditions: Prisma.SpecialtiesWhereInput[] = [];
   if (searchTerm) {

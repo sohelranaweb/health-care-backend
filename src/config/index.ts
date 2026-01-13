@@ -4,23 +4,35 @@ import path from "path";
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 export default {
-  node_env: process.env.NODE_ENV,
+  env: process.env.NODE_ENV,
   port: process.env.PORT,
-  database_url: process.env.DATABASE_URL,
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  salt_round: process.env.BCRYPT_SALT_ROUND,
+  openRouterApiKey: process.env.OPENROUTER_API_KEY,
+  jwt: {
+    jwt_secret: process.env.JWT_SECRET,
+    expires_in: process.env.EXPIRES_IN,
+    refresh_token_secret: process.env.REFRESH_TOKEN_SECRET,
+    refresh_token_expires_in: process.env.REFRESH_TOKEN_EXPIRES_IN,
+    reset_pass_secret: process.env.RESET_PASS_TOKEN,
+    reset_pass_token_expires_in: process.env.RESET_PASS_TOKEN_EXPIRES_IN,
+  },
+  reset_pass_link: process.env.RESET_PASS_LINK,
+  emailSender: {
+    email: process.env.SMTP_USER,
+    app_pass: process.env.SMTP_PASS,
+    smtp_port: process.env.SMTP_PORT,
+    smtp_host: process.env.SMTP_HOST,
+    smtp_from: process.env.SMTP_FROM,
+  },
   cloudinary: {
-    api_secret: process.env.CLOUDINARY_API_SECRET,
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
   },
-  jwt: {
-    acc_secret: process.env.JWT_ACCESS_SECRET,
-    acc_expires: process.env.JWT_ACCESS_EXPIRES,
-    refresh_secret: process.env.JWT_REFRESH_SECRET,
-    refresh_expires: process.env.JWT_REFRESH_EXPIRES,
-  },
-  super_admin: {
+  superAdmin: {
     email: process.env.SUPER_ADMIN_EMAIL,
     password: process.env.SUPER_ADMIN_PASSWORD,
   },
-  salt: process.env.BCRYPT_SALT_ROUND,
 };

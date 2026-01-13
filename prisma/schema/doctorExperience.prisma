@@ -1,0 +1,12 @@
+model DoctorExperiences {
+        id            String  @id @default(uuid())
+        instituteName String?
+        designation   String?
+        department    String?
+        startDate     String?
+        endDate       String?
+        doctor        Doctor  @relation(fields: [doctorId], references: [id])
+        doctorId      String
+
+        @@map("doctor_experiences")
+}
